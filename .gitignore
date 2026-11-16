@@ -1,0 +1,57 @@
+﻿# Generated data
+chroma_db/
+sparse_db/
+memory_db/
+model_cache/
+data/
+profile.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Env
+.env
+
+# Python 主虚拟环境（1.7GB，不入库）
+.venv/
+
+# Isolated OCR venv (PaddleOCR) — 含大量依赖，不入库
+.ocr_venv/
+
+# Temp
+_fix_*.py
+_make_test_pdf.py
+_dbg_*.png
+eval_wiki_vs_rag*.json
+reindex*.log
+evaluation_report.json
+tenant_data/
+
+# Runtime
+cache/
+logs/
+visuals/*.py
+
+# 本地 Redis 二进制与临时启动日志（不入库）
+_redis/
+_boot_*.log
+
+# 评测运行产物（不入库）
+tests/eval/eval_report.json
+tests/eval/golden_set.json
+memory_db/query_traces_export.json
+
+# 个人笔记与课程文档（不入库）
+student.md
+*.docx
+uploads/
+*.log
+
+# 真实演示文档数据（PDF/DOC）
+wendang/
+
+# macOS
+.DS_Store

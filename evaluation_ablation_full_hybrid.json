@@ -1,0 +1,9 @@
+{
+  "config": "full_hybrid",
+  "metrics": {
+    "faithfulness": 1.0,
+    "answer_relevancy": 0.9328748272923221,
+    "context_precision": 0.8979999999591222,
+    "context_recall": 0.92
+  }
+}
