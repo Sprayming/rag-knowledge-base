@@ -1,5 +1,5 @@
 """
-app —— rag-knowledge-base 法律文档 RAG 系统的顶层 Python 包（包标识文件）
+app —— rag-knowledge-base 知识库文档 RAG 系统的顶层 Python 包（包标识文件）
 
 【作用与功能】
 作为整个 rag-knowledge-base 系统的代码根包，使 `app` 目录成为可被 `import app...` 正常导入的包。
@@ -14,7 +14,7 @@ memory、worker、tenant 等）的统一命名空间入口。
   实例；若只需某子模块（如配置），建议直接 `from app.core.config import X`，避免重初始化。
 
 【整体作用】
-rag-knowledge-base 是一套完整的法律文档检索增强生成（RAG）系统，提供文档上传与处理、向量化
+rag-knowledge-base 是一套完整的知识库文档检索增强生成（RAG）系统，提供文档上传与处理、向量化
 存储、智能检索、多轮对话、多租户隔离、异步任务、Webhook 通知与 A/B 测试等能力，
 是 FastAPI 应用启动与所有业务模块相对导入的基础。
 """

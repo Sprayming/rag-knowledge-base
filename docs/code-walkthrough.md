@@ -302,7 +302,7 @@ async def chat(request: Request, req: ChatRequest, user: dict = Depends(require_
     history_text = ""
     for m in (req.history or [])[-4:]:                        # 只取最近 4 轮历史
         history_text += f"{m.get('role','user')}: {m.get('content','')[:200]} " + chr(10)
-    PROMPT_TEMPLATE = """你是一个法律专家助手。回答基于提供的文本。
+    PROMPT_TEMPLATE = """你是一个企业知识库问答专家助手。回答基于提供的文本。
     参考文本:
     {context}
     记忆上下文:
@@ -353,9 +353,9 @@ def _build_pipeline(tenant_id: str):
 def rewrite(self, query: str, context: str = "", num_variants: int = 2) -> list[str]:
     if not self.api_key:
         return [query]                                              # 没 key 就原样返回（降级）
-    prompt = f"""你是一个法律检索专家。请将用户的问题改写成更适合向量检索的形式。
+    prompt = f"""你是一个业务检索专家。请将用户的问题改写成更适合向量检索的形式。
 原问题：{query}
-要求：1.保持原意 2.补充法律术语 3.多子问题拆独立查询 4.每变体≤50字
+要求：1.保持原意 2.补充业务术语 3.多子问题拆独立查询 4.每变体≤50字
 输出格式（JSON 数组）：["改写后的查询1", "改写后的查询2"] 只输出 JSON。"""
     try:
         resp = requests.post(f"{self.base_url}/chat/completions", ...json={"model":"deepseek-chat", ...})
@@ -431,7 +431,7 @@ def _rrf_fuse(self, dense_results, sparse_results, elasticsearch_results=None):
 ```
 
 **逐行要点**
-- **为什么 hybrid 而不纯语义**：法律术语（"N+1""竞业限制"）靠 BM25 精确命中关键词，避免纯向量把"赔偿金"和"补偿金"混淆漏检；向量负责语义相似，BM25 负责字面精确。
+- **为什么 hybrid 而不纯语义**：业务术语（"N+1""竞业限制"）靠 BM25 精确命中关键词，避免纯向量把"赔偿金"和"补偿金"混淆漏检；向量负责语义相似，BM25 负责字面精确。
 - **RRF 公式** `score += weight / (k + rank + 1)`（`rrf_k=60`）：排名第 1 贡献 `1/61`，第 2 名 `1/62`……两路都靠前的文档总分最高。**关键优势是不用归一化两路分数**（向量相似度和 BM25 分值量纲不同，直接相加会失衡）。
 - 注意：`HybridRetriever` 构造时 `use_reranker=False`（见 `chat.py:221` 直接 `HybridRetriever(...)` 没传），所以类内 `reranker` 为 `None`，精排实际由 `chat.py:223` 的全局 `_get_reranker().rerank()` 完成（见 2.5）。
 

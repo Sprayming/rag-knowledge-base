@@ -10,7 +10,7 @@ backup.py —— rag-knowledge-base 数据备份与恢复命令行工具。
 
 需要保护的四类数据:
 - chroma_db    :ChromaDB 向量库(文档切片的向量索引，重建代价高、要重新跑 embedding)
-- uploads      :用户上传的原始法律文档
+- uploads      :用户上传的原始知识库文档
 - memory_db    :对话记忆数据库
 - tenant_data  :多租户用户库 users.db(账号、密码哈希等)
 

@@ -1,0 +1,113 @@
+# 踩坑记录
+
+> 以下为开发过程中真实遇到的问题与修复方式，按时间倒序无关，仅供排查参考。
+
+## 踩过的坑
+
+以下是开发过程中遇到的关键问题、原因和解决方案。
+
+### 1. Healthcheck bare except 吞掉 SystemExit
+**现象**：容器健康检查永不失败，即使 Uvicorn 已崩溃。\
+**原因**：healthcheck.py 用了 bare `except:`（没有指定异常类型），捕获了 `SystemExit`（正常退出信号）。\
+**解决**：改为 `except Exception`，避免捕获 `SystemExit`、`KeyboardInterrupt`。
+
+### 2. 浏览器 IPv6 超时导致 1 分钟空白
+**现象**：打开 http://localhost:8000 要等 1 分钟才能看到页面。\
+**原因**：localhost 在某些浏览器中解析为 IPv6 地址 `::1`，Docker 未监听 IPv6，连接超时后才回退到 IPv4。\
+**解决**：明确绑定 `--host 0.0.0.0`，同时 `docker-compose.yml` 中 ports 改为 `127.0.0.1:8000:8000`。
+
+### 3. 容器无限重启
+**现象**：容器启动失败后，docker compose 不停重建容器，日志刷屏。\
+**原因**：`restart: unless-stopped` 配合短间隔健康检查，启动阶段未就绪就被强行重启。\
+**解决**：加 `start_period: 30s` 和 `retries: 3`，给应用充分的初始化时间。
+
+### 4. CPU 100% 导致页面缓慢
+**现象**：页面操作卡顿，CPU 持续满载。\
+**原因**：健康检查每 15 秒触发一次完整 Streamlit 脚本重新加载（热重载机制），每次重载都是 CPU 密集型操作。\
+**解决**：健康检查间隔从 15s 改为 120s，并加入 `start_period` 避免启动阶段频繁检查。
+
+### 5. Redis Alpine 镜像中没有 redis-server
+**现象**：`alpine:3.18` 为基础镜像的容器启动失败，提示找不到 redis-server。\
+**原因**：`alpine:3.18` 是裸 Alpine 系统，不包含 Redis。之前用 Dockerfile 手动安装但镜像更新后缓存失效。\
+**解决**：改用官方 `redis:7-alpine` 镜像，开箱即用。
+
+### 6. 中文编码双重损坏
+**现象**：HTML 和 Python 文件中的中文字符显示为乱码，如 `ç™»å½•`。\
+**原因**：PowerShell `@'...'@ | python` 管道将 UTF-8 字节按系统代码页（GBK）解码成 Latin-1，Python 再按 UTF-8 读取，导致双重编码错误。\
+**解决**：避免使用 PowerShell 管道传递中文；用 `[System.IO.File]::WriteAllText` 直接写入文件。
+
+### 7. 浏览器缓存旧版中文乱码页面
+**现象**：修复中文后刷新页面还是乱码，但加 `?t=1` 就正常。\
+**原因**：`docker cp` 替换了文件但 `last-modified` 时间戳没变，浏览器认为文件未过期，使用缓存中的旧版本。\
+**解决**：更新文件后执行 `touch` 更新时间戳，并在 HTML 中添加 `Cache-Control: no-cache` 元标签。
+
+### 8. 删除 PDF 不同步清除 ChromaDB
+**现象**：PDF 已删除，但问答仍能检索到该文档的内容（幽灵结果）。\
+**原因**：`DELETE` 只删了文件系统的 PDF，未清理 ChromaDB 中的向量索引。\
+**解决**：删除端点先查 `Chroma.get(where={"source": filename})` 获取对应 chunk IDs，再调用 `Chroma.delete(ids=...)` 同步清除索引。
+
+### 9. Docker 磁盘爆满导致 Bus error
+**现象**：docker build 过程中出现 `Bus error (core dumped)`，pip install 失败。\
+**原因**：Docker 的 WSL2 VHDX 虚拟磁盘占满 C 盘（0 字节可用），无法写入新数据。\
+**解决**：将 Docker 数据从 C 盘迁移到 D 盘（robocopy + mklink /J），并紧缩 VHDX（37GB -> 19.5GB）。
+
+### 10. 超管权限仅前端校验
+**现象**：浏览器隐藏了删除按钮，但用 Postman 直接发 DELETE 请求也能成功。\
+**原因**：后端未校验用户角色，任何用户都可以绕过前端直接调用 API。\
+**解决**：后端 `DELETE` 端点添加 `role == "super_admin"` 校验，返回 403 拒绝越权请求。
+
+### 11. 快速启动脚本 Docker 未就绪
+**现象**：双击 start-rag.bat 后直接报错，提示无法连接 Docker daemon。\
+**原因**：Docker Desktop 启动需要时间，脚本在 daemon 就绪前就执行了 `docker run`。\
+**解决**：加入 `:wait_docker` 循环，每 3 秒检查一次 `docker info`，直到 daemon 响应。
+
+### 12. docker-compose.yml 中 version 声明废弃
+**现象**：每次启动都打印 `attribute version is obsolete` 警告。\
+**原因**：Compose Specification v2 不再需要 `version: "3.x"` 声明。\
+**解决**：移除 `version: "3.9"` 行。
+
+
+### 13. MemorySystem 初始化参数名拼写错误
+**现象**：chat 接口 500，反回 "Internal Server Error"，浏览器报 "Unexpected token I, is not valid JSON"。\
+**原因**：`_get_memory` 函数中调用 `MemorySystem(embedder=embedder, ...)`，但构造函数参数名为 `embedding_model`，不是 `embedder`，导致 `TypeError: unexpected keyword argument`。\
+**解决**：`embedder=embedder` 改为 `embedding_model=embedder`。
+
+
+### 14. MemorySystem 构造参数 `worker` 不存在
+**现象**：chat 接口 500，报 `TypeError: got an unexpected keyword argument "worker"`。\
+**原因**：`_get_memory` 中传了 `worker=get_worker()`，但 `MemorySystem.__init__` 只接受 `embedding_model, persist_dir, redis_url, tenant_id, max_short_term, forgetting_threshold`，没有 `worker` 参数。\
+**解决**：删除 `worker=get_worker()` 参数。ShadowWorker 通过 `get_worker()` 单例内部访问，无需传入构造函数。
+
+
+### 15. tenant_data/users.db 被打包进镜像导致角色混乱
+**现象**：重建容器后首个注册用户拿到的是 `user` 而不是 `super_admin`。\
+**原因**：`docker compose build` 时 `COPY . .` 把本地的 `tenant_data/users.db`（含历史测试用户）打包进镜像，新建容器时数据库非空，首个用户无法成为 `super_admin`。\
+**解决**：删掉本地 `tenant_data/`，并在 `.dockerignore` 中添加 `tenant_data/`，避免数据库文件进入镜像。
+
+### 16. DirectEmbed 传错导致检索崩溃
+**现象**: 上传 PDF 后提问报 AttributeError: 'DirectEmbed' object has no attribute 'similarity_search_with_score'
+**根因**: HybridRetriever 的 dense_store 参数期望 ChromaDB（有搜索结果方法），代码传了 embedder（只做 embedding，无搜索能力）
+**修复**: HybridRetriever(embedder, ...) → HybridRetriever(vector_store, ...)
+**教训**: DirectEmbed 只负责"文字→向量"的转换，不负责存储和搜索。传参时确认对象有对应方法。
+
+### 17. FastAPI 版文件 GBK 编码问题
+**现象**: 容器启动报 SyntaxError，中文显示为 Ã¥Â¸Âº 等乱码
+**根因**: 另一台电脑用 GBK（Windows 默认编码）写 Python 文件，Python 3 默认用 UTF-8 解析时报错。
+同时 .env 被 .gitignore 排除，容器内 load_dotenv() 读取不到，embedding 配置走默认值指向 DeepSeek 而非火山引擎
+**修复**:
+  - GBK 文件转为 UTF-8
+  - docker-compose.yml 补全 EMBEDDING_API_KEY / BASE_URL / MODEL
+  - .env 缺失导致 embedding 指向 DeepSeek 而非火山引擎
+**教训**: Windows 上 PowerShell 的 Add-Content / Out-File 默认用 GBK，Python 文件必须显式指定 UTF-8 编码。
+.env 文件不要放 .gitignore（或放 docker-compose 的 environment 里兜底）。
+
+### 18. PaddleOCR 3.7 API 巨变 + 主环境装包冲突（OCR 接入扫描件）
+**现象**：扫描件 PDF 上传后检索不到；老代码抽 OCR 结果得到一堆单字母乱码（如 `n a o t o e e e...`），0 个中文字符。
+**根因**：
+1. **API 不兼容**：PaddleOCR 3.7 相对老代码写的 2.x 改动巨大——构造参数 `use_angle_cls`/`use_gpu` 已移除（改 `use_doc_orientation_classify`/`use_doc_unwarping`/`use_textline_orientation`/`lang`）；`ocr()` 已废弃，推荐 `predict()`；识别结果 `OCRResult` 是**类字典对象**，文本在 `result[0]["rec_texts"]`，而老代码 `for line in result[0]: line[1][0]` 实际在遍历 dict 的 key 字符串、取单字符 → 乱码。
+2. **装包冲突**：在 miniconda 主环境 `pip install paddleocr` 会触发对 PyYAML 等重包的卸载，被沙箱「安全删除」保护拦截而失败。
+**解决**：
+- `ocr_engine.py` 的 `recognize()` 改用 `predict()` + `result[0]["rec_texts"]`；`_init_paddleocr` 用 3.7 新参数并带 2.x 兼容回退。实测一页 ~1100 中文字符、置信度 0.97+，识别极准。
+- 建独立 `.ocr_venv`，用 `.pth` 文件复用 miniconda 已装重包，只把 PaddleOCR 相关新包装进 venv 目录，规避卸载冲突。`.ocr_venv` 已入 `.gitignore`。
+- 启动 bat 的 `PY` 指向 `.ocr_venv/Scripts/python.exe`（**注意 `set DIR` 须在 `set PY` 之前，否则 `%DIR%` 展开为空**）。
+- 用 `.ocr_venv/Scripts/python.exe -u reindex_docs.py` 离线重建索引，扫描件即可被检索。

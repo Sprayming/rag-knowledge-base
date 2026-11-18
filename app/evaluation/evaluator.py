@@ -2,7 +2,7 @@
 app/evaluation/evaluator —— 基于 RAGAS 的 RAG 端到端评估模块
 
 【作用与功能】
-本模块通过预设的法律测试问题集，对 rag-knowledge-base 的检索增强生成链路做
+本模块通过预设的业务测试问题集，对 rag-knowledge-base 的检索增强生成链路做
 端到端质量评估。它先用 HuggingFace 嵌入构建向量检索器，再对每题检索+
 生成答案，最后用 RAGAS 框架计算多项质量指标并落盘评估报告。
 
@@ -10,7 +10,7 @@ app/evaluation/evaluator —— 基于 RAGAS 的 RAG 端到端评估模块
 - `build_retriever`:基于 text2vec 嵌入构建向量检索器(top-3)。
 - `generate_answer`:调用 DeepSeek API 基于上下文生成答案。
 - `run_evaluation`:评估主流程，串联检索/生成/RAGAS/报告保存。
-- `TEST_QUESTIONS`:预设的劳动法律领域测试问题(含标准答案)。
+- `TEST_QUESTIONS`:预设的劳动业务领域测试问题(含标准答案)。
 
 【适用场景】
 - 场景1:模型或检索策略迭代后，命令行运行 `run_evaluation()` 对比质量。
@@ -27,7 +27,7 @@ app/evaluation/evaluator —— 基于 RAGAS 的 RAG 端到端评估模块
 - ContextPrecision (精确度): 评估检索到的上下文是否都相关
 - ContextRecall (召回率): 评估是否检索到了所有相关的上下文
 
-该模块通过预设的法律测试问题，对 RAG 系统进行端到端的性能评估。
+该模块通过预设的业务测试问题，对 RAG 系统进行端到端的性能评估。
 """
 
 import types, sys, json, os
@@ -45,7 +45,7 @@ from ragas.dataset_schema import SingleTurnSample, EvaluationDataset
 from ragas.metrics.collections import faithfulness, answer_relevancy, context_precision, context_recall
 from ragas import evaluate
 
-# 预设的法律领域测试问题集(包含问题和标准答案)
+# 预设的业务领域测试问题集(包含问题和标准答案)
 TEST_QUESTIONS = [
     {"question": "建立劳动关系需要签订什么形式的合同？", "ground_truth": "应当订立书面劳动合同"},
     {"question": "已建立劳动关系但未同时订立书面合同的，应在多久内补签？", "ground_truth": "自用工之日起一个月内"},
@@ -132,7 +132,7 @@ def generate_answer(question, contexts):
     
     # 构建提示词
     ctx = "\n\n".join(contexts)
-    prompt = "你是一个法律专家。只基于以下资料回答问题。资料不足时说明。\n\n资料:\n" + ctx + "\n\n问题: " + question
+    prompt = "你是一个企业知识库问答专家。只基于以下资料回答问题。资料不足时说明。\n\n资料:\n" + ctx + "\n\n问题: " + question
     
     try:
         # 调用大模型 API
@@ -170,7 +170,7 @@ def run_evaluation(data_path=None):
     4. 输出评估结果并保存报告
     
     参数:
-        data_path (str, optional): 待评估的文本文件路径。如果未提供，使用默认的法律文本。
+        data_path (str, optional): 待评估的文本文件路径。如果未提供，使用默认的企业制度文本。
         
     返回:
         dict: RAGAS 评估结果字典，包含各项指标的分数。

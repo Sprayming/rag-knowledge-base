@@ -28,7 +28,7 @@ def test_upload_document_success_and_listed(client, auth_headers, test_env):
             文件真实落盘到该 tenant 的临时上传目录；/api/documents 列表可见该文件。
     边界/异常:patch 作用域需覆盖后台线程，避免真实解析假 PDF 失败。
     """
-    chunks = [_FakeChunk("第一段法律文本"), _FakeChunk("第二段法律文本")]
+    chunks = [_FakeChunk("第一段企业制度文本"), _FakeChunk("第二段企业制度文本")]
     fake_pipeline = MagicMock()
     fake_pipeline.process.return_value = chunks
 

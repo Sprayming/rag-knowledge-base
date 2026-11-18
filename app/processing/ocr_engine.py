@@ -14,7 +14,7 @@ pytesseract)，并兼容不同版本的 API 差异，使上层管线无需关心
 
 【适用场景】
 - 场景1:处理管线对 PDF 每页图片调用 `recognize()` 提取图片文字。
-- 场景2:仅有扫描层、无文本层的法律文档，通过 OCR 获取可检索文字。
+- 场景2:仅有扫描层、无文本层的知识库文档，通过 OCR 获取可检索文字。
 
 【依赖关系】
 - 上游调用方:`app.processing.multimodal_pipeline`。
@@ -94,7 +94,7 @@ class OCREngine:
             # use_angle_cls / use_gpu；lang 仍用于选择中英文模型。
             # text_det_limit_side_len:限制检测阶段输入长边，扫描件大图在 CPU 上
             # 推理极慢，压到 736 可显著降低单页耗时且不影响召回行数。
-            # use_textline_orientation=False:法律文书正文几乎都是正向排版，
+            # use_textline_orientation=False:企业知识库正文几乎都是正向排版，
             # 关闭文字行方向分类可省掉一次模型推理。
             self._ocr = PaddleOCR(
                 use_doc_orientation_classify=False,

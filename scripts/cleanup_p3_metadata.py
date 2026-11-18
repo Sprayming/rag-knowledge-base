@@ -1,7 +1,7 @@
 """cleanup_p3_metadata.py —— P3 数据卫生清理(一次性维护脚本)
 
 处理三件事:
-1. 删除混入语料的测试文档(默认 流程验证_测试法律文书.pdf)及其稀疏向量;
+1. 删除混入语料的测试文档(默认 流程验证_测试企业知识库.pdf)及其稀疏向量;
 2. 为缺 page_number 的切片回填页码:
    - 有文本层的 PDF:按正文在页文本中定位;
    - 扫描件(无文本层):逐页 OCR 后再定位;
@@ -31,7 +31,7 @@ import fitz  # noqa: E402
 import app.core.config as cfg  # noqa: E402
 from app.processing.pdf_extractor import extract_pdf_pages  # noqa: E402
 
-TEST_SOURCES = {"流程验证_测试法律文书.pdf"}
+TEST_SOURCES = {"流程验证_测试企业知识库.pdf"}
 
 
 def _norm(text: str) -> str:

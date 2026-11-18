@@ -57,7 +57,7 @@ from app.llm.client import complete_chat  # noqa: E402
 SUPPORTED_EXT = {".txt", ".md", ".pdf", ".docx"}
 MAX_CHARS = 6000
 
-PROMPT_TMPL = """你是一名法律文档评测集构建助手。下面是一段法律文档的文本内容。
+PROMPT_TMPL = """你是一名知识库文档评测集构建助手。下面是一段知识库文档的文本内容。
 请基于该文档生成 {n} 个"普通用户最可能向智能问答系统提出的真实问题",用于评测 RAG 系统的回答质量。
 
 要求:

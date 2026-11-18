@@ -31,7 +31,7 @@ import random
 
 from locust import HttpUser, task, between, events
 
-# 模拟真实法律问答的问题库（覆盖不同主题与长度，触发 RAG 检索 + LLM 生成）
+# 模拟真实知识库问答的问题库（覆盖不同主题与长度，触发 RAG 检索 + LLM 生成）
 QUESTIONS = [
     "劳动合同到期不续签，公司需要给经济补偿吗？",
     "如何解除劳动合同？需要提前多久通知？",

@@ -14,7 +14,7 @@ BM25 稀疏、可选 Elasticsearch 全文、可选 BGE-M3 稀疏)后通过 RRF �
 - `HybridRetriever.retrieve` / `invoke`:对外检索入口(invoke 兼容 LangChain 接口)
 
 【适用场景】
-- 场景1:问答链路中根据用户查询召回相关法律条文/文档片段
+- 场景1:问答链路中根据用户查询召回相关制度条款/文档片段
 - 场景2:作为 LangChain retriever 接入上层链(invoke 接口)
 
 【依赖关系】
@@ -230,7 +230,7 @@ class HybridRetriever:
         """稀疏检索 (BGE-M3 SPLADE 词汇权重)。
 
         与 BM25 互补:BM25 基于词频/逆文档频率，BGE-M3 稀疏是**学习到的**词汇权重，
-        对法律术语、法条编号的同义/近义匹配更强。dot-product 打分后参与 RRF 融合。
+        对业务术语、法条编号的同义/近义匹配更强。dot-product 打分后参与 RRF 融合。
         sparse_store 为 None 或模型不可用时返回空(降级为 BM25 + 稠密)。
         """
         if not self.sparse_store:

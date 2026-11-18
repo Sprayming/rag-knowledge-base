@@ -12,7 +12,7 @@ app/ingestion/vision_caption —— Vision LLM 图片标注
 
 【适用场景】
 - 场景1:处理管线对每页图片调用 `caption()` 生成“[图片描述]”并入块。
-- 场景2:扫描件、图表类法律文档补充可被检索的图片语义信息。
+- 场景2:扫描件、图表类知识库文档补充可被检索的图片语义信息。
 
 【依赖关系】
 - 上游调用方:`app.processing.multimodal_pipeline`。

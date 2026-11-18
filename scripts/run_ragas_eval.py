@@ -18,7 +18,7 @@
 【主要组成】
 - `TEST_QUESTIONS`:内置黄金测试集，6 条《劳动合同法》问答样本
 - `call_llm`:调用 DeepSeek Chat Completions 接口，返回纯文本答案
-- `generate_answer`:把上下文与问题拼成法律专家 prompt，产出被测答案
+- `generate_answer`:把上下文与问题拼成企业知识库问答专家 prompt，产出被测答案
 - `run_eval`:主流程——生成答案、构造 RAGAS 数据集、计算指标、落盘报告
 - `_DirectEmbed`(run_eval 内部类):直连 ARK embedding 接口的适配器，
   实现 RAGAS 所需的 embed_documents / embed_query / embed_text / embed_texts 四个方法
@@ -149,7 +149,7 @@ def call_llm(prompt, timeout=30):
   except: return ''  # 网络异常、JSON 解析失败等一律降级为空答案
 
 def generate_answer(q, ctxs):
-  """把检索上下文与问题拼成"法律专家"提示词，调用 LLM 生成被测答案。
+  """把检索上下文与问题拼成"企业知识库问答专家"提示词，调用 LLM 生成被测答案。
 
   参数:
       q (str): 用户问题
